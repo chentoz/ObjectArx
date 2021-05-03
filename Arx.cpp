@@ -12,6 +12,7 @@ void CmdHelloWorld();
 void CmdChangeColor();
 void CmdAddLine();
 void CmdAddCircle();
+void CmdAddArc();
 
 template <typename T>
 struct Handle
@@ -44,14 +45,14 @@ public:
 		return *p;
 	}
 
-	T* & operator->() {
+	T*& operator->() {
 		return p;
 	}
 
-	T* & operator&() {
+	T*& operator&() {
 		return p;
 	}
-	VOID operator=(T *_p) {
+	VOID operator=(T* _p) {
 		p = _p;
 	}
 
@@ -75,13 +76,17 @@ private:
 	}
 private:
 	T* p = nullptr;
-	std::size_t *refCount = nullptr;
+	std::size_t* refCount = nullptr;
 };
 
 class CCalculation {
 public:
 	static AcGePoint2d MiddlePoint(AcGePoint2d p1, AcGePoint2d p2);
 	static AcGePoint3d MiddlePoint(AcGePoint3d p1, AcGePoint3d p2);
+
+	static AcGePoint3d Pt2dTo3d(AcGePoint2d pt);
+
+	static double PI();
 };
 
 class CCreateEnt
@@ -93,6 +98,12 @@ public:
 	static AcDbObjectId CreateCircle(AcGePoint2d p1, AcGePoint2d p2);
 	static AcDbObjectId CreateCircle(AcGePoint2d p1, AcGePoint2d p2, AcGePoint2d p3);
 	static AcDbObjectId CreateCircle_API(AcGePoint2d p1, AcGePoint2d p2, AcGePoint2d p3);
+	static AcDbObjectId CreateArc(AcGePoint3d pCenter, AcGeVector3d vec, double radius, double startAngle, double endAngle);
+	static AcDbObjectId CreateArc(AcGePoint2d pCenter, double radius, double startAngle, double endAngle);
+	static AcDbObjectId CreateArc(AcGePoint2d pStart, AcGePoint2d pOnArc, AcGePoint2d pEnd);
+	static AcDbObjectId CreateArcSCE(AcGePoint2d pStart, AcGePoint2d pCenter, AcGePoint2d pEnd);
+	static AcDbObjectId CreateArc(AcGePoint2d pStart, AcGePoint2d pCenter, double angle);
+	static void test(void);
 
 protected:
 private:
@@ -119,6 +130,7 @@ void InitApp()
 	acedRegCmds->addCommand(L"HelloArx", L"ChangeColor", L"ChangeColor", ACRX_CMD_MODAL, CmdChangeColor);
 	acedRegCmds->addCommand(L"HelloArx", L"AddLine", L"AddLine", ACRX_CMD_MODAL, CmdAddLine);
 	acedRegCmds->addCommand(L"HelloArx", L"AddCircle", L"AddCircle", ACRX_CMD_MODAL, CmdAddCircle);
+	acedRegCmds->addCommand(L"HelloArx", L"AddArc", L"AddArc", ACRX_CMD_MODAL, CmdAddArc);
 }
 
 void UnloadApp()
@@ -325,6 +337,62 @@ AcDbObjectId CCreateEnt::CreateCircle_API(AcGePoint2d p1, AcGePoint2d p2, AcGePo
 	return CCreateEnt::CreateCircle(pCenter, geArc.radius());
 }
 
+AcDbObjectId CCreateEnt::CreateArc(AcGePoint3d pCenter, AcGeVector3d vec, double radius, double startAngle, double endAngle)
+{
+	Handle<AcDbArc> hArc;
+	&hArc = new AcDbArc(pCenter, vec, radius, startAngle, endAngle);
+	AcDbObjectId arcId;
+	arcId = CModifyEnt::PostToModelSpace(&hArc);
+
+	return arcId;
+}
+
+AcDbObjectId CCreateEnt::CreateArc(AcGePoint2d pCenter, double radius, double startAngle, double endAngle)
+{
+	AcGeVector3d vec(0, 0, 1);
+	return CCreateEnt::CreateArc(CCalculation::Pt2dTo3d(pCenter), vec, radius, startAngle, endAngle);
+}
+
+AcDbObjectId CCreateEnt::CreateArc(AcGePoint2d pStart, AcGePoint2d pOnArc, AcGePoint2d pEnd)
+{
+	AcGeCircArc2d geArc(pStart, pOnArc, pEnd);
+	AcGePoint2d pCenter = geArc.center();
+	double radius = geArc.radius();
+
+	AcGeVector2d vecStart(pStart.x - pCenter.x, pStart.y - pCenter.y);
+	AcGeVector2d vecEnd(pEnd.x - pCenter.x, pEnd.y - pCenter.y);
+	double startAngle = vecStart.angle();
+	double endAngle = vecEnd.angle();
+
+	return CCreateEnt::CreateArc(pCenter, radius, startAngle, endAngle);
+}
+
+void CCreateEnt::test(void)
+{
+
+}
+
+AcDbObjectId CCreateEnt::CreateArcSCE(AcGePoint2d pStart, AcGePoint2d pCenter, AcGePoint2d pEnd)
+{
+	double radius = pCenter.distanceTo(pStart);
+
+	AcGeVector2d vecStart(pStart.x - pCenter.x, pStart.y - pCenter.y);
+	AcGeVector2d vecEnd(pEnd.x - pCenter.x, pEnd.y - pCenter.y);
+	double startAngle = vecStart.angle();
+	double endAngle = vecEnd.angle();
+	return CCreateEnt::CreateArc(pCenter, radius, startAngle, endAngle);
+}
+
+AcDbObjectId CCreateEnt::CreateArc(AcGePoint2d pStart, AcGePoint2d pCenter, double angle)
+{
+	double radius = pCenter.distanceTo(pStart);
+
+	AcGeVector2d vecStart(pStart.x - pCenter.x, pStart.y - pCenter.y);
+	double startAngle = vecStart.angle();
+	double endAngle = startAngle + angle;
+	return CCreateEnt::CreateArc(pCenter, radius, startAngle, endAngle);
+}
+
 Acad::ErrorStatus CModifyEnt::ChangeColor(AcDbObjectId entId, Adesk::UInt16 colorIndex)
 {
 	Handle<AcDbEntity> hEntity;
@@ -349,7 +417,7 @@ Acad::ErrorStatus CModifyEnt::ChangeLineType(AcDbObjectId entId, std::wstring st
 	return Acad::eOk;
 }
 
-AcDbObjectId CModifyEnt::PostToModelSpace(AcDbEntity *pEnt)
+AcDbObjectId CModifyEnt::PostToModelSpace(AcDbEntity* pEnt)
 {
 	Handle<AcDbBlockTable> hBlockTable;
 	acdbHostApplicationServices()->workingDatabase()->getBlockTable(&hBlockTable, AcDb::kForRead);
@@ -382,3 +450,37 @@ AcGePoint3d CCalculation::MiddlePoint(AcGePoint3d p1, AcGePoint3d p2)
 	return p;
 }
 
+AcGePoint3d CCalculation::Pt2dTo3d(AcGePoint2d pt)
+{
+	AcGePoint3d pTemp(pt.x, pt.y, 0);
+	return pTemp;
+}
+
+double CCalculation::PI()
+{
+	return 4 * atan(1.0);
+}
+
+
+void CmdAddArc()
+{
+	AcGePoint2d pCenter(50, 50);
+	CCreateEnt::CreateArc(pCenter, 100 * sqrt(2) / 2, 5 * CCalculation::PI() / 4, 7 * CCalculation::PI() / 4);
+
+	// 三点法创建圆弧
+	AcGePoint2d pStart(100, 0);
+	AcGePoint2d pOnArc(120, 50);
+	AcGePoint2d pEnd(100, 100);
+	CCreateEnt::CreateArc(pStart, pOnArc, pEnd);
+
+	// 起点， 圆点， 终点
+	pStart.set(100, 100);
+	pCenter.set(50, 50);
+	pEnd.set(0, 100);
+	CCreateEnt::CreateArcSCE(pStart, pCenter, pEnd);
+
+	// 起点，圆心，圆弧角度
+	pStart.set(0, 100);
+	pCenter.set(50, 50);
+	CCreateEnt::CreateArc(pStart, pCenter, CCalculation::PI() / 2);
+}
