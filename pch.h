@@ -9,6 +9,7 @@
 
 // add headers that you want to pre-compile here
 #include "framework.h"
+#include <cmath>
 
 #include <aced.h>
 #include <accmd-defs.h>
@@ -19,5 +20,6 @@
 #include "dbents.h"
 #include "dbsymtb.h"
 #include "dbapserv.h"
+#include "gearc3d.h"
 
 #endif //PCH_H

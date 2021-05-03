@@ -11,6 +11,7 @@ void UnloadApp();
 void CmdHelloWorld();
 void CmdChangeColor();
 void CmdAddLine();
+void CmdAddCircle();
 
 template <typename T>
 struct Handle
@@ -61,7 +62,7 @@ public:
 private:
 	void Init()
 	{
-		refCount = new std::size_t(1); // we have set ref as 0 
+		refCount = new std::size_t(1); // we have set ref as 0
 	}
 	void AddRef()
 	{
@@ -77,10 +78,22 @@ private:
 	std::size_t *refCount = nullptr;
 };
 
+class CCalculation {
+public:
+	static AcGePoint2d MiddlePoint(AcGePoint2d p1, AcGePoint2d p2);
+	static AcGePoint3d MiddlePoint(AcGePoint3d p1, AcGePoint3d p2);
+};
+
 class CCreateEnt
 {
 public:
 	static AcDbObjectId CreateLine(AcGePoint3d pStart, AcGePoint3d pEnd);
+	static AcDbObjectId CreateCircle(AcGePoint3d pCenter, AcGeVector3d vec, double radius);
+	static AcDbObjectId CreateCircle(AcGePoint3d pCenter, double radius);
+	static AcDbObjectId CreateCircle(AcGePoint2d p1, AcGePoint2d p2);
+	static AcDbObjectId CreateCircle(AcGePoint2d p1, AcGePoint2d p2, AcGePoint2d p3);
+	static AcDbObjectId CreateCircle_API(AcGePoint2d p1, AcGePoint2d p2, AcGePoint2d p3);
+
 protected:
 private:
 };
@@ -105,6 +118,7 @@ void InitApp()
 	acedRegCmds->addCommand(L"HelloArx", L"Hello", L"Hello", ACRX_CMD_MODAL, CmdHelloWorld);
 	acedRegCmds->addCommand(L"HelloArx", L"ChangeColor", L"ChangeColor", ACRX_CMD_MODAL, CmdChangeColor);
 	acedRegCmds->addCommand(L"HelloArx", L"AddLine", L"AddLine", ACRX_CMD_MODAL, CmdAddLine);
+	acedRegCmds->addCommand(L"HelloArx", L"AddCircle", L"AddCircle", ACRX_CMD_MODAL, CmdAddCircle);
 }
 
 void UnloadApp()
@@ -134,6 +148,22 @@ void CmdAddLine()
 	CModifyEnt::ChangeColor(lineId, 1);
 	CModifyEnt::ChangeLayer(lineId, L"虚线");
 	CModifyEnt::ChangeLineType(lineId, L"中心线");
+}
+
+void CmdAddCircle()
+{
+	AcGePoint3d pCenter(100, 100, 0);
+	CCreateEnt::CreateCircle(pCenter, 20);
+
+	AcGePoint2d p1(70, 100);
+	AcGePoint2d p2(130, 100);
+	CCreateEnt::CreateCircle(p1, p2);
+
+	p1.set(60, 100);
+	p2.set(140, 100);
+	AcGePoint2d p3(100, 60);
+
+	CCreateEnt::CreateCircle(p1, p2, p3);
 }
 
 AcDbObjectId CreateLine()
@@ -235,6 +265,66 @@ AcDbObjectId CCreateEnt::CreateLine(AcGePoint3d pStart, AcGePoint3d pEnd)
 	return lineId;
 }
 
+AcDbObjectId CCreateEnt::CreateCircle(AcGePoint3d pCenter, AcGeVector3d vec, double radius)
+{
+	Handle<AcDbCircle> hCircle;
+	&hCircle = new AcDbCircle(pCenter, vec, radius);
+	AcDbObjectId circleId;
+	circleId = CModifyEnt::PostToModelSpace(&hCircle);
+
+	return circleId;
+}
+
+AcDbObjectId CCreateEnt::CreateCircle(AcGePoint3d pCenter, double radius)
+{
+	AcGeVector3d vec(0, 0, 1);
+	return CCreateEnt::CreateCircle(pCenter, vec, radius);
+}
+
+AcDbObjectId CCreateEnt::CreateCircle(AcGePoint2d p1, AcGePoint2d p2)
+{
+	AcGePoint2d p = CCalculation::MiddlePoint(p1, p2);
+	AcGePoint3d pCenter(p[X], p[Y], 0);
+
+	double radius = p1.distanceTo(p2) / 2;
+
+	return CCreateEnt::CreateCircle(pCenter, radius);
+}
+
+AcDbObjectId CCreateEnt::CreateCircle(AcGePoint2d p1, AcGePoint2d p2, AcGePoint2d p3)
+{
+	double xysm, xyse, xy;
+	AcGePoint3d pCenter;
+	double radius;
+
+	xy = pow(p1[X], 2) + pow(p1[Y], 2);
+	xyse = xy - (pow(p3[X], 2) + pow(p3[Y], 2));
+	xysm = xy - (pow(p2[X], 2) + pow(p2[Y], 2));
+	xy = (p1[X] - p2[X]) * (p1.y - p3.y) - (p1.x - p3.x) * (p1.y - p2.y);
+	if (fabs(xy) < 0.000001)
+	{
+		MessageBoxA(0, "参数无法创建圆！", "", 0);
+	}
+	pCenter.x = (xysm * (p1.y - p3.y) - xyse * (p1.y - p2.y)) / (2 * xy);
+	pCenter.y = (xyse * (p1.x - p2.x) - xysm * (p1.x - p3.x)) / (2 * xy);
+	pCenter.z = 0;
+
+	radius = sqrt((p1.x - pCenter.x) * (p1.x - pCenter.x) + (p1.x - pCenter.y) * (p1.y - pCenter.y));
+	if (radius < 0.000001)
+	{
+		MessageBoxA(0, "半径太小！", "", 0);
+	}
+
+	return CCreateEnt::CreateCircle(pCenter, radius);
+}
+
+AcDbObjectId CCreateEnt::CreateCircle_API(AcGePoint2d p1, AcGePoint2d p2, AcGePoint2d p3)
+{
+	AcGeCircArc2d geArc(p1, p2, p3);
+	AcGePoint3d pCenter(geArc.center().x, geArc.center().y, 0);
+	return CCreateEnt::CreateCircle(pCenter, geArc.radius());
+}
+
 Acad::ErrorStatus CModifyEnt::ChangeColor(AcDbObjectId entId, Adesk::UInt16 colorIndex)
 {
 	Handle<AcDbEntity> hEntity;
@@ -272,3 +362,23 @@ AcDbObjectId CModifyEnt::PostToModelSpace(AcDbEntity *pEnt)
 
 	return entId;
 }
+
+AcGePoint2d CCalculation::MiddlePoint(AcGePoint2d p1, AcGePoint2d p2)
+{
+	AcGePoint2d p;
+	p.x = (p1.x + p2.x) / 2;
+	p.y = (p1.y + p2.y) / 2;
+
+	return p;
+}
+
+AcGePoint3d CCalculation::MiddlePoint(AcGePoint3d p1, AcGePoint3d p2)
+{
+	AcGePoint3d p;
+	p.x = (p1.x + p2.x) / 2;
+	p.y = (p1.y + p2.y) / 2;
+	p.z = (p1.z + p2.z) / 2;
+
+	return p;
+}
+
