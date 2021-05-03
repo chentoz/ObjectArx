@@ -22,4 +22,11 @@
 #include "dbapserv.h"
 #include "gearc3d.h"
 
+#include <map>
+#include <string>
+#include <tuple>
+
+#include "Helpers.h"
+DECLARE_CMDS_LIST;
+
 #endif //PCH_H
