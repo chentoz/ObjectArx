@@ -14,6 +14,12 @@ public:
 	static Acad::ErrorStatus ChangeLineType(AcDbObjectId entId, std::wstring strLineType);
 
 	static AcDbObjectId PostToModelSpace(AcDbEntity* pEnt);
+
+	static Acad::ErrorStatus Rotate(AcDbObjectId entId, AcGePoint2d pBase, double rotation);
+
+	static Acad::ErrorStatus Move(AcDbObjectId entId, AcGePoint3d pBase, AcGePoint3d pDest);
+
+	static Acad::ErrorStatus Scale(AcDbObjectId entId, AcGePoint3d pBase, double scaleFactor);
 };
 
 Acad::ErrorStatus CModifyEnt::ChangeColor(AcDbObjectId entId, Adesk::UInt16 colorIndex)
@@ -43,7 +49,7 @@ Acad::ErrorStatus CModifyEnt::ChangeLineType(AcDbObjectId entId, std::wstring st
 AcDbObjectId CModifyEnt::PostToModelSpace(AcDbEntity* pEnt)
 {
 	Handle<AcDbBlockTable> hBlockTable;
-	acdbHostApplicationServices()->workingDatabase()->getBlockTable(&hBlockTable, AcDb::kForRead);
+	acdbHostApplicationServices()->workingDatabase()->getBlockTable(hBlockTable, AcDb::kForRead);
 
 	Handle<AcDbBlockTableRecord> hBlockTableRecord;
 	hBlockTable->getAt(ACDB_MODEL_SPACE, &hBlockTableRecord, AcDb::kForWrite);
@@ -53,6 +59,44 @@ AcDbObjectId CModifyEnt::PostToModelSpace(AcDbEntity* pEnt)
 
 	return entId;
 }
+
+Acad::ErrorStatus CModifyEnt::Rotate(AcDbObjectId entId, AcGePoint2d pBase, double rotation)
+{
+	AcGeMatrix3d xform;
+	AcGeVector3d vec(0, 0, 1);
+	xform.setToRotation(rotation, vec, CCalculation::Pt2dTo3d(pBase));
+
+	Handle<AcDbEntity> pEnt;
+	Acad::ErrorStatus es = acdbOpenObject(pEnt, entId, AcDb::kForWrite, false);
+
+	pEnt->transformBy(xform);
+	return es;
+}
+
+Acad::ErrorStatus CModifyEnt::Move(AcDbObjectId entId, AcGePoint3d pBase, AcGePoint3d pDest)
+{
+	AcGeMatrix3d xform;
+	AcGeVector3d vec(pDest.x - pBase.x, pDest.y - pBase.y, pDest.z - pBase.z);
+	xform.setToTranslation(vec);
+
+	Handle<AcDbEntity> pEnt;
+	auto es = acdbOpenObject(pEnt, entId, AcDb::kForWrite, false);
+	pEnt->transformBy(xform);
+	return es;
+}
+
+Acad::ErrorStatus CModifyEnt::Scale(AcDbObjectId entId, AcGePoint3d pBase, double scaleFactor)
+{
+	AcGeMatrix3d xform;
+	xform.setToScaling(scaleFactor, pBase);
+
+	Handle<AcDbEntity> pEnt;
+	auto es = acdbOpenObject(pEnt, entId, AcDb::kForWrite, false);
+	pEnt->transformBy(xform);
+
+	return es;
+}
+
 #endif
 
 #ifndef CREATE_ENTITY
@@ -71,6 +115,13 @@ public:
 	static AcDbObjectId CreateArc(AcGePoint2d pStart, AcGePoint2d pOnArc, AcGePoint2d pEnd);
 	static AcDbObjectId CreateArcSCE(AcGePoint2d pStart, AcGePoint2d pCenter, AcGePoint2d pEnd);
 	static AcDbObjectId CreateArc(AcGePoint2d pStart, AcGePoint2d pCenter, double angle);
+	static AcDbObjectId CreatePolyline(AcGePoint2dArray points, double width = 0);
+	static AcDbObjectId CreatePolyline(AcGePoint2d pStart, AcGePoint2d pEnd, double width = 0);
+	static AcDbObjectId Create3DPolyline(AcGePoint3dArray points);
+	static AcDbObjectId CreatePolygon(AcGePoint2d pCenter, int number, double radius, double rotation, double width);
+	static AcDbObjectId CreateRectangle(AcGePoint2d p1, AcGePoint2d p2, double width);
+	static AcDbObjectId CreatePolyCircle(AcGePoint2d pCenter, double radius, double width);
+	static AcDbObjectId CreatePolyArc(AcGePoint2d pCenter, double radius, double angleStart, double angleEnd, double width);
 	static void test(void);
 
 protected:
@@ -176,6 +227,127 @@ AcDbObjectId CCreateEnt::CreateArc(AcGePoint2d pStart, AcGePoint2d pOnArc, AcGeP
 	double endAngle = vecEnd.angle();
 
 	return CCreateEnt::CreateArc(pCenter, radius, startAngle, endAngle);
+}
+
+AcDbObjectId CCreateEnt::CreatePolyline(AcGePoint2dArray points, double width /*= 0*/)
+{
+	int numVertices = points.length();
+	Handle<AcDbPolyline> hPoly;
+	hPoly = new AcDbPolyline(numVertices);
+	for (int i = 0; i < numVertices; i++) {
+		hPoly->addVertexAt(i, points.at(i), 0, width, width);
+	}
+	AcDbObjectId polyId = CModifyEnt::PostToModelSpace(hPoly);
+	return polyId;
+}
+
+AcDbObjectId CCreateEnt::CreatePolyline(AcGePoint2d pStart, AcGePoint2d pEnd, double width /*= 0*/)
+{
+	AcGePoint2dArray points;
+	points.append(pStart);
+	points.append(pEnd);
+
+	return CCreateEnt::CreatePolyline(points, width);
+}
+
+AcDbObjectId CCreateEnt::Create3DPolyline(AcGePoint3dArray points)
+{
+	Handle<AcDb3dPolyline> hPoly3D = new AcDb3dPolyline(AcDb::k3dSimplePoly, points);
+	return CModifyEnt::PostToModelSpace(hPoly3D);
+}
+
+AcDbObjectId CCreateEnt::CreatePolygon(AcGePoint2d pCenter, int number, double radius, double rotation, double width)
+{
+	AcGePoint2dArray points;
+	auto angle = 2 * CCalculation::PI() / number;
+
+	for (int i = 0; i <= number; i++)
+	{
+		AcGePoint2d p;
+		p.x = pCenter.x + radius * cos(i * angle);
+		p.y = pCenter.y + radius * sin(i * angle);
+
+		points.append(p);
+	}
+
+	AcDbObjectId polyId = CCreateEnt::CreatePolyline(points, width);
+
+	H(AcDbEntity, pEnt);
+	acdbOpenAcDbEntity(pEnt, polyId, AcDb::kForWrite);
+
+	if (pEnt->isKindOf(AcDbPolyline::desc()) == Adesk::kTrue) return polyId;
+
+	H(AcDbPolyline, pPoly) = AcDbPolyline::cast(pEnt);
+
+	if (pPoly) {
+		pPoly->setClosed(Adesk::kTrue);
+	}
+	CModifyEnt::Rotate(polyId, pCenter, rotation);
+	return polyId;
+}
+
+AcDbObjectId CCreateEnt::CreateRectangle(AcGePoint2d p1, AcGePoint2d p2, double width)
+{
+	auto x1 = p1.x, x2 = p2.x;
+	auto y1 = p1.y, y2 = p2.y;
+
+	AcGePoint2d pLeftBottom(CCalculation::Min(x1, x2), CCalculation::Min(y1, y2));
+	AcGePoint2d pRightBottom(CCalculation::Max(x1, x2), CCalculation::Min(y1, y2));
+	AcGePoint2d pRightTop(CCalculation::Max(x1, x2), CCalculation::Max(y1, y2));
+	AcGePoint2d pLeftTop(CCalculation::Min(x1, x2), CCalculation::Max(y1, y2));
+
+	H(AcDbPolyline, pPoly) = new AcDbPolyline(4);
+	pPoly->addVertexAt(0, pLeftBottom, 0, width, width);
+	pPoly->addVertexAt(1, pRightBottom, 0, width, width);
+	pPoly->addVertexAt(2, pRightTop, 0, width, width);
+	pPoly->addVertexAt(3, pLeftTop, 0, width, width);
+	pPoly->setClosed(Adesk::kTrue);
+
+	AcDbObjectId polyId;
+	polyId = CModifyEnt::PostToModelSpace(pPoly);
+
+	return polyId;
+}
+
+AcDbObjectId CCreateEnt::CreatePolyCircle(AcGePoint2d pCenter, double radius, double width)
+{
+	AcGePoint2d p1, p2, p3;
+	p1.x = pCenter.x + radius;
+	p1.y = pCenter.y;
+	p2.x = pCenter.x - radius;
+	p2.y = pCenter.y;
+	p3.x = pCenter.x + radius;
+	p3.y = pCenter.y;
+
+	H(AcDbPolyline, pPoly) = new AcDbPolyline(3);
+	pPoly->addVertexAt(0, p1, 1, width, width);
+	pPoly->addVertexAt(1, p2, 1, width, width);
+	pPoly->addVertexAt(2, p3, 1, width, width);
+	pPoly->setClosed(Adesk::kTrue);
+
+	AcDbObjectId polyId;
+	polyId = CModifyEnt::PostToModelSpace(pPoly);
+
+	return polyId;
+}
+
+AcDbObjectId CCreateEnt::CreatePolyArc(AcGePoint2d pCenter, double radius, double angleStart, double angleEnd, double width)
+{
+	AcGePoint2d p1, p2;
+	p1.x = pCenter.x + radius * cos(angleStart);
+	p1.y = pCenter.y + radius * sin(angleStart);
+
+	p1.x = pCenter.x + radius * cos(angleStart);
+	p1.y = pCenter.y + radius * sin(angleStart);
+
+	H(AcDbPolyline, pPoly) = new AcDbPolyline(3);
+	pPoly->addVertexAt(0, p1, tan((angleEnd - angleStart) / 4), width, width);
+	pPoly->addVertexAt(1, p2, 0, width, width);
+
+	AcDbObjectId polyId;
+	polyId = CModifyEnt::PostToModelSpace(pPoly);
+
+	return polyId;
 }
 
 void CCreateEnt::test(void)

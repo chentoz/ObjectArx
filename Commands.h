@@ -69,6 +69,33 @@ ADD_CMD("AddArc", []()->void
 	CCreateEnt::CreateArc(pStart, pCenter, CCalculation::PI() / 2);
 })
 
+ADD_CMD("AddPolyline", []()->void
+{
+	AcGePoint2d pStart(0, 0);
+	AcGePoint2d pEnd(100, 100);
+	CCreateEnt::CreatePolyline(pStart, pEnd, 1);
+
+	//AcGePoint3d p1(0, 0, 0),
+
+	AcGePoint3d p1(0, 0, 0);
+	AcGePoint3d p2(100, 0, 0);
+	AcGePoint3d p3(100, 100, 0);
+
+	AcGePoint3dArray points;
+	points.append(p1);
+	points.append(p2);
+	points.append(p3);
+
+	CCreateEnt::Create3DPolyline(points);
+
+	CCreateEnt::CreatePolygon(AcGePoint2d::kOrigin, 6, 30, 0, 1);
+	AcGePoint2d p(60, 70);
+	CCreateEnt::CreateRectangle(p, pEnd, 1);
+	p.set(50, 50);
+	CCreateEnt::CreatePolyCircle(p, 30, 1);
+
+	CCreateEnt::CreatePolyArc(p, 50, CCalculation::GtoR(45), CCalculation::GtoR(225), 1);
+})
 
 END_DECLARE_CMDS
 
