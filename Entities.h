@@ -122,6 +122,10 @@ public:
 	static AcDbObjectId CreateRectangle(AcGePoint2d p1, AcGePoint2d p2, double width);
 	static AcDbObjectId CreatePolyCircle(AcGePoint2d pCenter, double radius, double width);
 	static AcDbObjectId CreatePolyArc(AcGePoint2d pCenter, double radius, double angleStart, double angleEnd, double width);
+	static auto CreateEllipse(AcGePoint3d pCenter, AcGeVector3d vecNormal, AcGeVector3d majorAxis, double ratio);
+	static auto CreateEllipse(AcGePoint2d p1, AcGePoint2d p2);
+	static auto CreateSpline(const AcGePoint3dArray& poinst, int order = 4, double fitTolerance = 0.0);
+	static auto CreateSpline(const AcGePoint3dArray& poinst, const AcGeVector3d& startTangent, const AcGeVector3d& endTangent, int order = 4, double fitTolerance = 0.0);
 	static void test(void);
 
 protected:
@@ -348,6 +352,44 @@ AcDbObjectId CCreateEnt::CreatePolyArc(AcGePoint2d pCenter, double radius, doubl
 	polyId = CModifyEnt::PostToModelSpace(pPoly);
 
 	return polyId;
+}
+
+auto CCreateEnt::CreateEllipse(AcGePoint3d pCenter, AcGeVector3d vecNormal, AcGeVector3d majorAxis, double ratio)
+{
+	H(AcDbEllipse, pEllipse) = new AcDbEllipse(pCenter, vecNormal, majorAxis, ratio);
+
+	return CModifyEnt::PostToModelSpace(pEllipse);
+}
+
+auto CCreateEnt::CreateEllipse(AcGePoint2d p1, AcGePoint2d p2)
+{
+	AcGePoint3d pCenter;
+	pCenter = CCalculation::MiddlePoint(CCalculation::Pt2dTo3d(p1), CCalculation::Pt2dTo3d(p2));
+
+	AcGeVector3d vecNormal(0, 0, 1);
+	AcGeVector3d majorAxis(fabs(p1.x - p2.x), 0, 0);
+	auto ratio = fabs((p1.y - p2.y) / (p1.x - p2.x));
+
+	return CCreateEnt::CreateEllipse(pCenter, vecNormal, majorAxis, ratio);
+}
+
+auto CCreateEnt::CreateSpline(const AcGePoint3dArray& poinst, int order, double fitTolerance)
+{
+	assert(order >= 2 && order <= 26);
+	H(AcDbSpline, pSpline) = new AcDbSpline(poinst, order, fitTolerance);
+
+	AcDbObjectId splineId;
+	splineId = CModifyEnt::PostToModelSpace(pSpline);
+
+	return splineId;
+}
+
+auto CCreateEnt::CreateSpline(const AcGePoint3dArray& poinst, const AcGeVector3d& startTangent, const AcGeVector3d& endTangent, int order /*= 4*/, double fitTolerance /*= 0.0*/)
+{
+	assert(order >= 2 && order <= 26);
+	H(AcDbSpline, pSpline) = new AcDbSpline(poinst, startTangent, endTangent, order, fitTolerance);
+
+	return CModifyEnt::PostToModelSpace(pSpline);
 }
 
 void CCreateEnt::test(void)

@@ -97,6 +97,46 @@ ADD_CMD("AddPolyline", []()->void
 	CCreateEnt::CreatePolyArc(p, 50, CCalculation::GtoR(45), CCalculation::GtoR(225), 1);
 })
 
+ADD_CMD("AddEllipse", []()->void
+{
+	AcGeVector3d vecNormal(0, 0, 1);
+	AcGeVector3d majorAxis(40, 0, 0);
+	AcDbObjectId entId;
+	entId = CCreateEnt::CreateEllipse(AcGePoint3d::kOrigin, vecNormal, majorAxis, 0.5);
+
+	AcGePoint2d p1(60, 80);
+	AcGePoint2d p2(140, 120);
+	CCreateEnt::CreateEllipse(p1, p2);
+})
+
+ADD_CMD("AddSpline", []()->void
+{
+	AcGePoint3d p1(0, 0, 0);
+	AcGePoint3d p2(10, 30, 0);
+	AcGePoint3d p3(60, 80, 0);
+	AcGePoint3d p4(100, 100, 0);
+
+	AcGePoint3dArray points;
+	points.append(p1);
+	points.append(p2);
+	points.append(p3);
+	points.append(p4);
+	CCreateEnt::CreateSpline(points);
+
+	p2.set(30, 10, 0);
+	p3.set(80, 60, 0);
+
+	points.removeSubArray(0, 3);
+	points.append(p1);
+	points.append(p2);
+	points.append(p3);
+	points.append(p4);
+
+	AcGeVector3d startTangent(5, 1, 0);
+	AcGeVector3d endTangent(5, 1, 0);
+	CCreateEnt::CreateSpline(points, startTangent, endTangent);
+})
+
 END_DECLARE_CMDS
 
 #endif

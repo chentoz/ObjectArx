@@ -19,7 +19,7 @@ typedef std::tuple<const ACHAR*, cmd_func> CMD;
 #define END_DECLARE_CMDS };
 
 #define ADD_CMD(cmd_name, func)               \
-    std::make_tuple(L#cmd_name, func),
+    std::make_tuple(L##cmd_name, func),
 
 #define REGISTER_CMDS(callback)                                               \
 for (const auto& cmd_func : cmdsList) {                                       \

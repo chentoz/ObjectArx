@@ -21,6 +21,8 @@
 #include "dbsymtb.h"
 #include "dbapserv.h"
 #include "gearc3d.h"
+#include "dbelipse.h"
+#include "dbspline.h"
 
 #include <map>
 #include <string>
