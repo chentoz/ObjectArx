@@ -126,6 +126,10 @@ public:
 	static auto CreateEllipse(AcGePoint2d p1, AcGePoint2d p2);
 	static auto CreateSpline(const AcGePoint3dArray& poinst, int order = 4, double fitTolerance = 0.0);
 	static auto CreateSpline(const AcGePoint3dArray& poinst, const AcGeVector3d& startTangent, const AcGeVector3d& endTangent, int order = 4, double fitTolerance = 0.0);
+	static auto CreateFromCurves(const AcDbVoidPtrArray& curveSegments, AcDbVoidPtrArray& regions);
+	static auto CreateRegion(const AcDbObjectIdArray & curveIds);
+	static auto CreateText(const AcGePoint3d& pInsert, const ACHAR* btext, AcDbObjectId style = AcDbObjectId::kNull, double height = 2.5, double rotation = 0);
+	static auto CreateMultiLineText(const AcGePoint3d& pInsert, const ACHAR* text, AcDbObjectId style = AcDbObjectId::kNull, double height = 2.5, double width = 10);
 	static void test(void);
 
 protected:
@@ -392,9 +396,76 @@ auto CCreateEnt::CreateSpline(const AcGePoint3dArray& poinst, const AcGeVector3d
 	return CModifyEnt::PostToModelSpace(pSpline);
 }
 
-void CCreateEnt::test(void)
+auto CCreateEnt::CreateFromCurves(const AcDbVoidPtrArray& curveSegments, AcDbVoidPtrArray& regions)
 {
 
+}
+
+auto CCreateEnt::CreateRegion(const AcDbObjectIdArray& curveIds)
+{
+	AcDbObjectIdArray regionIds;
+	AcDbVoidPtrArray curves;
+
+	AcDbVoidPtrArray regions;
+	H(AcDbEntity, pEnt);
+	H(AcDbRegion, pRegion);
+
+	for (int i = 0; i < curveIds.length(); i++)
+	{
+		acdbOpenAcDbEntity(pEnt, curveIds.at(i), AcDb::kForRead);
+		if (pEnt->isKindOf(AcDbCurve::desc())) {
+			curves.append(static_cast<void*>(pEnt));
+		}
+	}
+	auto es = AcDbRegion::createFromCurves(curves, regions);
+	if (es == Acad::eOk)
+	{
+		for (auto i : whoshuu::range(0, regions.length()))
+		{
+			pRegion = static_cast<AcDbRegion*>(regions[i]);
+			pRegion->setDatabaseDefaults();
+			AcDbObjectId regionId = CModifyEnt::PostToModelSpace(pRegion);
+			regionIds.append(regionId);
+		}
+	}
+	else {
+		for (auto i : whoshuu::range(0, regions.length()))
+		{
+			delete (AcRxObject*)regions[i];
+		}
+	}
+	for (auto i :  whoshuu::range(0, curves.length()))
+	{
+		//H(AcDbEntity, pEntTemp) = curves[i]->cast(pEnt);
+		H(AcDbEntity, pEntTemp) = static_cast<AcDbEntity*>(curves[i]);
+	}
+	return regionIds;
+}
+
+auto CCreateEnt::CreateText(const AcGePoint3d& pInsert, const ACHAR* text, AcDbObjectId style /*= AcDbObjectId::kNull*/, double height /*= 2.5*/, double rotation)
+{
+	H(AcDbText, pText) = new AcDbText(pInsert, text, style, height, rotation);
+	return CModifyEnt::PostToModelSpace(pText);
+}
+
+auto CCreateEnt::CreateMultiLineText(const AcGePoint3d& pInsert, const ACHAR* text, AcDbObjectId style /*= AcDbObjectId::kNull*/, double height /*= 2.5*/, double width /*= 10*/)
+{
+	H(AcDbMText, pMText) = new AcDbMText();
+	pMText->setTextStyle(style);
+	pMText->setContents(text);
+	pMText->setLocation(pInsert);
+	pMText->setTextHeight(height);
+	pMText->setWidth(width);
+	pMText->setAttachment(AcDbMText::kBottomLeft);
+
+	return CModifyEnt::PostToModelSpace(pMText);
+}
+
+void CCreateEnt::test(void)
+{
+	for (const auto& i : whoshuu::range(10))
+	{
+	}
 }
 
 AcDbObjectId CCreateEnt::CreateArcSCE(AcGePoint2d pStart, AcGePoint2d pCenter, AcGePoint2d pEnd)

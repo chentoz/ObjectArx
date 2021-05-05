@@ -23,12 +23,33 @@
 #include "gearc3d.h"
 #include "dbelipse.h"
 #include "dbspline.h"
+#include "dbregion.h"
+#include "adscodes.h"
 
 #include <map>
 #include <string>
 #include <tuple>
 
 #include "Helpers.h"
-DECLARE_CMDS_LIST;
+DECLARE_CMDS_LIST;	 // commands
+
+#include "range.h"
+
+//template <typename T>
+//auto irange(T from, T to)
+//{
+//	static_assert(std::is_integral<T>::value, "only integers");
+//
+//	return { from, to };
+//}
+
+//template <typename T>
+////decltype(auto) irange(T from, T to)
+//LoopRange<T> irange(T from, T to)
+//{
+//	static_assert(std::is_integral<T>::value, "only integers");
+//
+//	return { from, to };
+//}
 
 #endif //PCH_H

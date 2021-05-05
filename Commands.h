@@ -137,6 +137,46 @@ ADD_CMD("AddSpline", []()->void
 	CCreateEnt::CreateSpline(points, startTangent, endTangent);
 })
 
+ADD_CMD("AddRegion", []()->void
+{
+	ads_name ss;
+	auto rt = acedSSGet(NULL, NULL, NULL, NULL, ss);
+	AcDbObjectIdArray objectIds;
+
+	if (rt == RTNORM)
+	{
+		int length;
+		acedSSLength(ss, &length);
+		for (auto i : whoshuu::range(0, length))
+		{
+			ads_name ent;
+			acedSSName(ss, i, ent);
+			AcDbObjectId objId;
+			acdbGetObjectId(objId, ent);
+
+			objectIds.append(objId);
+		}
+	}
+	acedSSFree(ss);
+
+	AcDbObjectIdArray regionsIds = CCreateEnt::CreateRegion(objectIds);
+	if (regionsIds.length() > 0)
+	{
+		acutPrintf(L"\n已经创建%d个面域！", regionsIds.length());
+	}
+	else {
+		acutPrintf(L"\n创建0个面域");
+	}
+})
+
+ADD_CMD("AddText", []()->void {
+	AcGePoint3d pInsert(0, 4, 0);
+	CCreateEnt::CreateText(pInsert, L"CAD大观园");
+
+	pInsert.set(0, 0, 0);
+	CCreateEnt::CreateMultiLineText(pInsert, L"http://www.cadhelp.net");
+})
+
 END_DECLARE_CMDS
 
 #endif
