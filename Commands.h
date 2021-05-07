@@ -177,6 +177,22 @@ ADD_CMD("AddText", []()->void {
 	CCreateEnt::CreateMultiLineText(pInsert, L"http://www.cadhelp.net");
 })
 
+ADD_CMD("AddBlock", []()->void {
+
+	H(AcDbBlockTable, pBlkTbl);
+	acdbHostApplicationServices()->workingDatabase()->getBlockTable(pBlkTbl, AcDb::kForWrite);
+
+	P(AcDbBlockTableRecord, pBlkTblRcd) = new AcDbBlockTableRecord();
+
+	ACHAR blkName[40];
+
+	if (acedGetString(Adesk::kFalse, L"\nÊäÈëÍ¼¿éµÄÃû³Æ£º", blkName) != RTNORM)
+	{
+		return;
+	}
+})
+
+
 END_DECLARE_CMDS
 
 #endif
