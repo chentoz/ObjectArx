@@ -139,22 +139,17 @@ private:
 };
 
 template <typename T>
-class APIHandle
+class Handle
 {
 public:
 	// 我们把 空指针 看作一个“引用”
 	// 稍后设置
 	// 释放的时候，如果设置，那么就 close
-	typedef enum {
-		//eNew,
-		eAPI
-	} PointerType;
-	APIHandle(T* _p = nullptr, PointerType _pType = eAPI) // case0 : construct from "new pointer"
+	Handle(T* _p = nullptr) // case0 : construct from "new pointer"
 	{
 		Init();
 		AddRef();
 
-		pType = _pType;
 		if (_p) {
 			p = _p;
 		}
@@ -162,17 +157,16 @@ public:
 			// 延迟设置指针
 		}
 	}
-	~APIHandle()
+	~Handle()
 	{
 		Destruct();
 	}
-	APIHandle(const APIHandle<T>& _src) // case1 : construct from exsisting handle
+	Handle(const Handle<T>& _src) // case1 : construct from exsisting handle
 	{
 		if (&_src != this) {
 			Destruct();
 
 			p = _src.p;
-			pType = _src->pType;
 			pRefCount = _src.pRefCount;
 			AddRef();
 		}
@@ -186,7 +180,12 @@ public:
 	T*& operator&() {
 		return p;
 	}
-	//operator T* ()
+	void Delete() {
+		if (p) {
+			delete p;
+		}
+	}
+	//operator T* () //
 	//{
 	//	return p;
 	//}
@@ -200,7 +199,6 @@ public:
 
 			Init();
 			AddRef();
-			pType = eAPI;
 			p = _p; // 无论指针是否为 nullptr，都形成完美的闭环
 		}
 		//return *this;
@@ -233,12 +231,7 @@ private:
 		if (*pRefCount == 0) {
 			if (p)
 			{
-				if (pType == eAPI) {
-					p->close();
-				}
-				else {
-					delete p;
-				}
+				p->close();
 				p = nullptr; // we get 'p' from Adobe System
 			}
 			delete pRefCount;
@@ -247,11 +240,12 @@ private:
 private:
 	T* p = nullptr;
 	std::size_t* pRefCount = nullptr;
-	PointerType pType = eAPI;
 };
 
-#define H(TYPE, LOCAL_VAR) APIHandle<TYPE> LOCAL_VAR
-#define P(TYPE, LOCAL_VAR) PlainHandle<TYPE> LOCAL_VAR
+#define H(TYPE, LOCAL_VAR) Handle<TYPE> LOCAL_VAR
+//#define P(TYPE, LOCAL_VAR) PlainHandle<TYPE> LOCAL_VAR
+#define P(TYPE, LOCAL_VAR) TYPE* LOCAL_VAR
+
 #endif // HANDLE
 
 #endif

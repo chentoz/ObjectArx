@@ -7,6 +7,185 @@
 #include "Calculation.h"
 #include "Entities.h"
 
+void add_block(void)
+{
+	//Hi();
+	H(AcDbBlockTable, pBlkTbl);
+	acdbHostApplicationServices()->workingDatabase()->getBlockTable(pBlkTbl, AcDb::kForWrite);
+
+	H(AcDbBlockTableRecord, pBlkTblRcd) = new AcDbBlockTableRecord();
+
+	ACHAR blkName[40];
+
+	if (acedGetString(Adesk::kFalse, L"\n输入图块的名称：", blkName) != RTNORM)
+	{
+		return;
+	}
+	pBlkTblRcd->setName(blkName);
+	AcDbObjectId blkDefId;
+	pBlkTbl->add(blkDefId, pBlkTblRcd);
+
+	AcGePoint3d pStart(-10, 0, 0);
+	AcGePoint3d pEnd(10, 0, 0);
+	H(AcDbLine, pLine1) = new AcDbLine(pStart, pEnd);
+
+	pStart.set(0, -10, 0);
+	pEnd.set(0, 10, 0);
+	H(AcDbLine, pLine2) = new AcDbLine(pStart, pEnd);
+
+	AcGeVector3d vecNormal(0, 0, 1);
+	H(AcDbCircle, pCircle) = new AcDbCircle(AcGePoint3d::kOrigin, vecNormal, 6);
+
+	AcDbObjectId entId;
+	pBlkTblRcd->appendAcDbEntity(entId, pLine1);
+	pBlkTblRcd->appendAcDbEntity(entId, pLine2);
+	pBlkTblRcd->appendAcDbEntity(entId, pCircle);
+}
+
+void add_block_ref(void)
+{
+	ACHAR blkName[40];
+
+	if (acedGetString(Adesk::kFalse, L"\n输入图块的名称：", blkName) != RTNORM)
+	{
+		return;
+	}
+	H(AcDbBlockTable, pBlkTbl);
+	acdbHostApplicationServices()->workingDatabase()->getBlockTable(pBlkTbl, AcDb::kForWrite);
+	std::wstring strBlkDef = blkName;
+	if (!pBlkTbl->has(strBlkDef.c_str()))
+	{
+		acutPrintf(L"\n未找到块定义");
+		return;
+	}
+	ads_point pt;
+	if (acedGetPoint(NULL, L"\n输入块参照的插入点:", pt) != RTNORM)
+	{
+		return;
+	}
+	AcGePoint3d pInsert = asPnt3d(pt);
+
+	H(AcDbBlockTableRecord, pBlkTblRcd);
+	pBlkTbl->getAt(ACDB_MODEL_SPACE, pBlkTblRcd, AcDb::kForWrite);
+
+	AcDbObjectId blkDefId;
+	pBlkTbl->getAt(strBlkDef.c_str(), blkDefId);
+	H(AcDbBlockReference, pBlkRef) = new AcDbBlockReference(pInsert, blkDefId);
+
+	AcDbObjectId entId;
+	pBlkTblRcd->appendAcDbEntity(entId, pBlkRef);
+}
+
+void add_block_with_properties(void)
+{
+	H(AcDbBlockTable, pBlkTbl);
+	acdbHostApplicationServices()->workingDatabase()->getBlockTable(pBlkTbl, AcDb::kForWrite);
+
+	H(AcDbBlockTableRecord, pBlkTblRcd) = new AcDbBlockTableRecord();
+	ACHAR blkName[40];
+	if (acedGetString(Adesk::kFalse, L"\n输入图块的名称: ", blkName) != RTNORM)
+	{
+		Hi();
+		pBlkTblRcd.Delete();
+	}
+	pBlkTblRcd->setName(blkName);
+
+	AcDbObjectId  blkDefId;
+	pBlkTbl->add(blkDefId, pBlkTblRcd);
+	AcGePoint3d pStart(-10, 0, 0);
+	AcGePoint3d pEnd(10, 0, 0);
+	H(AcDbLine, pLine1) = new AcDbLine(pStart, pEnd);
+
+	pStart.set(0, -10, 0);
+	pEnd.set(0, 10, 0);
+	H(AcDbLine, pLine2) = new AcDbLine(pStart, pEnd);
+	AcGeVector3d vecNormal(0, 0, 1);
+
+	H(AcDbCircle, pCircle) = new AcDbCircle(AcGePoint3d::kOrigin, vecNormal, 6);
+	H(AcDbAttributeDefinition, pAttDef) = new AcDbAttributeDefinition(pEnd, L"20", L"直径", L"输入直径");
+
+	AcDbObjectId entId;
+	pBlkTblRcd->appendAcDbEntity(entId, pLine1);
+	pBlkTblRcd->appendAcDbEntity(entId, pLine2);
+	pBlkTblRcd->appendAcDbEntity(entId, pCircle);
+	pBlkTblRcd->appendAcDbEntity(entId, pAttDef);
+}
+
+void insert_block_with_properties(void)
+{
+	ACHAR blkName[40];
+	if (acedGetString(Adesk::kFalse, L"\n输入图块的名称：", blkName) != RTNORM) {
+		return;
+	}
+	H(AcDbBlockTable, pBlkTbl);
+	acdbHostApplicationServices()->workingDatabase()->getBlockTable(pBlkTbl, AcDb::kForWrite);
+
+	std::wstring strBlkDef = blkName;
+	if(!pBlkTbl->has(strBlkDef.c_str()))
+	{
+		acutPrintf(L"\n当前图形中未包含指定名称的块定义");
+		return;
+	}
+
+	ads_point pt;
+	if (acedGetPoint(NULL, L"\n输入块参照的插入点: ", pt) != RTNORM)
+	{
+		return;
+	}
+	AcGePoint3d pInsert = asPnt3d(pt);
+	AcDbObjectId blkDefId;
+	pBlkTbl->getAt(strBlkDef.c_str(), blkDefId);
+
+	H(AcDbBlockReference, pBlkRef) = new AcDbBlockReference(pInsert, blkDefId);
+
+	H(AcDbBlockTableRecord, pBlkTblRcd);
+	pBlkTbl->getAt(ACDB_MODEL_SPACE, pBlkTblRcd, AcDb::kForWrite);
+
+	AcDbObjectId entId;
+	pBlkTblRcd->appendAcDbEntity(entId, pBlkRef);
+
+	H(AcDbBlockTableRecord, pBlkDefRcd);
+	acdbOpenObject(&pBlkDefRcd, blkDefId, AcDb::kForRead);
+
+	if (pBlkDefRcd->hasAttributeDefinitions())
+	{
+		P(AcDbBlockTableRecordIterator, pltr);
+		pBlkDefRcd->newIterator(pltr);
+		H(AcDbEntity, pEnt);
+		for (pltr->start(); !pltr->done(); pltr->step())
+		{
+			pltr->getEntity(pEnt, AcDb::kForRead);
+			H(AcDbAttributeDefinition, pAttDef);
+			pAttDef = AcDbAttributeDefinition::cast(pEnt);
+			if (pAttDef)
+			{
+				H(AcDbAttribute, pAtt) = new AcDbAttribute();
+				pAtt->setPropertiesFrom(pAttDef);
+				pAtt->setInvisible(pAttDef->isInvisible());
+				AcGePoint3d pBase = pAttDef->position();
+				// set position
+				pBase += pBlkRef->position().asVector();
+				pAtt->setPosition(pBase);
+				pAtt->setHeight(pAttDef->height());
+				pAtt->setRotation(pAttDef->rotation());
+				// set tag
+				ACHAR* pStr;
+				pStr = pAttDef->tag();
+				pAtt->setTag(pStr);
+				free(pStr);
+				// prompt
+				pStr = pAttDef->prompt();
+				acutPrintf(L"%s%s", L"\n", pStr);
+				free(pStr);
+				pAtt->setFieldLength(30);
+				pAtt->setTextString(L"40");
+				pBlkRef->appendAttribute(pAtt);
+			}
+		}
+		delete pltr;
+	}
+}
+
 BEGIN_DECLARE_CMDS
 
 ADD_CMD("HelloWorld", []()->void
@@ -178,18 +357,19 @@ ADD_CMD("AddText", []()->void {
 })
 
 ADD_CMD("AddBlock", []()->void {
+	add_block();
+})
 
-	H(AcDbBlockTable, pBlkTbl);
-	acdbHostApplicationServices()->workingDatabase()->getBlockTable(pBlkTbl, AcDb::kForWrite);
+ADD_CMD("InsertBlock", []()->void {
+	add_block_ref();
+})
 
-	P(AcDbBlockTableRecord, pBlkTblRcd) = new AcDbBlockTableRecord();
+ADD_CMD("AddBlockWithProperties", []()->void {
+	add_block_with_properties();
+})
 
-	ACHAR blkName[40];
-
-	if (acedGetString(Adesk::kFalse, L"\n输入图块的名称：", blkName) != RTNORM)
-	{
-		return;
-	}
+ADD_CMD("InsertBlockWithProperties", []()->void {
+	insert_block_with_properties();
 })
 
 

@@ -25,6 +25,7 @@
 #include "dbspline.h"
 #include "dbregion.h"
 #include "adscodes.h"
+#include "geassign.h"
 
 #include <map>
 #include <string>

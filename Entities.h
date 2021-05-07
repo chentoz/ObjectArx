@@ -24,7 +24,7 @@ public:
 
 Acad::ErrorStatus CModifyEnt::ChangeColor(AcDbObjectId entId, Adesk::UInt16 colorIndex)
 {
-	APIHandle<AcDbEntity> hEntity;
+	Handle<AcDbEntity> hEntity;
 	acdbOpenAcDbEntity(&hEntity, entId, AcDb::kForWrite);
 	hEntity->setColorIndex(colorIndex);
 	return Acad::eOk;
@@ -32,7 +32,7 @@ Acad::ErrorStatus CModifyEnt::ChangeColor(AcDbObjectId entId, Adesk::UInt16 colo
 
 Acad::ErrorStatus CModifyEnt::ChangeLayer(AcDbObjectId entId, std::wstring strLayerName)
 {
-	APIHandle<AcDbEntity> hEntity;
+	Handle<AcDbEntity> hEntity;
 	acdbOpenObject(&hEntity, entId, AcDb::kForWrite);
 	hEntity->setLayer(strLayerName.c_str());
 	return Acad::eOk;
@@ -40,7 +40,7 @@ Acad::ErrorStatus CModifyEnt::ChangeLayer(AcDbObjectId entId, std::wstring strLa
 
 Acad::ErrorStatus CModifyEnt::ChangeLineType(AcDbObjectId entId, std::wstring strLineType)
 {
-	APIHandle<AcDbEntity> hEntity;
+	Handle<AcDbEntity> hEntity;
 	acdbOpenObject(&hEntity, entId, AcDb::kForWrite);
 	hEntity->setLinetype(strLineType.c_str());
 	return Acad::eOk;
@@ -48,10 +48,10 @@ Acad::ErrorStatus CModifyEnt::ChangeLineType(AcDbObjectId entId, std::wstring st
 
 AcDbObjectId CModifyEnt::PostToModelSpace(AcDbEntity* pEnt)
 {
-	APIHandle<AcDbBlockTable> hBlockTable;
+	Handle<AcDbBlockTable> hBlockTable;
 	acdbHostApplicationServices()->workingDatabase()->getBlockTable(hBlockTable, AcDb::kForRead);
 
-	APIHandle<AcDbBlockTableRecord> hBlockTableRecord;
+	Handle<AcDbBlockTableRecord> hBlockTableRecord;
 	hBlockTable->getAt(ACDB_MODEL_SPACE, &hBlockTableRecord, AcDb::kForWrite);
 
 	AcDbObjectId entId;
@@ -66,7 +66,7 @@ Acad::ErrorStatus CModifyEnt::Rotate(AcDbObjectId entId, AcGePoint2d pBase, doub
 	AcGeVector3d vec(0, 0, 1);
 	xform.setToRotation(rotation, vec, CCalculation::Pt2dTo3d(pBase));
 
-	APIHandle<AcDbEntity> pEnt;
+	Handle<AcDbEntity> pEnt;
 	Acad::ErrorStatus es = acdbOpenObject(pEnt, entId, AcDb::kForWrite, false);
 
 	pEnt->transformBy(xform);
@@ -79,7 +79,7 @@ Acad::ErrorStatus CModifyEnt::Move(AcDbObjectId entId, AcGePoint3d pBase, AcGePo
 	AcGeVector3d vec(pDest.x - pBase.x, pDest.y - pBase.y, pDest.z - pBase.z);
 	xform.setToTranslation(vec);
 
-	APIHandle<AcDbEntity> pEnt;
+	Handle<AcDbEntity> pEnt;
 	auto es = acdbOpenObject(pEnt, entId, AcDb::kForWrite, false);
 	pEnt->transformBy(xform);
 	return es;
@@ -90,7 +90,7 @@ Acad::ErrorStatus CModifyEnt::Scale(AcDbObjectId entId, AcGePoint3d pBase, doubl
 	AcGeMatrix3d xform;
 	xform.setToScaling(scaleFactor, pBase);
 
-	APIHandle<AcDbEntity> pEnt;
+	Handle<AcDbEntity> pEnt;
 	auto es = acdbOpenObject(pEnt, entId, AcDb::kForWrite, false);
 	pEnt->transformBy(xform);
 
@@ -208,7 +208,7 @@ AcDbObjectId CCreateEnt::CreateCircle_API(AcGePoint2d p1, AcGePoint2d p2, AcGePo
 
 AcDbObjectId CCreateEnt::CreateArc(AcGePoint3d pCenter, AcGeVector3d vec, double radius, double startAngle, double endAngle)
 {
-	APIHandle<AcDbArc> hArc;
+	Handle<AcDbArc> hArc;
 	&hArc = new AcDbArc(pCenter, vec, radius, startAngle, endAngle);
 	AcDbObjectId arcId;
 	arcId = CModifyEnt::PostToModelSpace(&hArc);
@@ -239,7 +239,7 @@ AcDbObjectId CCreateEnt::CreateArc(AcGePoint2d pStart, AcGePoint2d pOnArc, AcGeP
 AcDbObjectId CCreateEnt::CreatePolyline(AcGePoint2dArray points, double width /*= 0*/)
 {
 	int numVertices = points.length();
-	APIHandle<AcDbPolyline> hPoly;
+	Handle<AcDbPolyline> hPoly;
 	hPoly = new AcDbPolyline(numVertices);
 	for (int i = 0; i < numVertices; i++) {
 		hPoly->addVertexAt(i, points.at(i), 0, width, width);
@@ -259,7 +259,7 @@ AcDbObjectId CCreateEnt::CreatePolyline(AcGePoint2d pStart, AcGePoint2d pEnd, do
 
 AcDbObjectId CCreateEnt::Create3DPolyline(AcGePoint3dArray points)
 {
-	APIHandle<AcDb3dPolyline> hPoly3D = new AcDb3dPolyline(AcDb::k3dSimplePoly, points);
+	Handle<AcDb3dPolyline> hPoly3D = new AcDb3dPolyline(AcDb::k3dSimplePoly, points);
 	return CModifyEnt::PostToModelSpace(hPoly3D);
 }
 
