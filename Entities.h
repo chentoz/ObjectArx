@@ -138,7 +138,7 @@ private:
 
 AcDbObjectId CCreateEnt::CreateLine(AcGePoint3d pStart, AcGePoint3d pEnd)
 {
-	PlainHandle<AcDbLine> hLine = new AcDbLine(pStart, pEnd);
+	H(AcDbLine,hLine) = new AcDbLine(pStart, pEnd);
 
 	AcDbObjectId lineId;
 	lineId = CModifyEnt::PostToModelSpace(&hLine);
@@ -148,10 +148,10 @@ AcDbObjectId CCreateEnt::CreateLine(AcGePoint3d pStart, AcGePoint3d pEnd)
 
 AcDbObjectId CCreateEnt::CreateCircle(AcGePoint3d pCenter, AcGeVector3d vec, double radius)
 {
-	PlainHandle<AcDbCircle> hCircle = new AcDbCircle(pCenter, vec, radius);
+	H(AcDbCircle,hCircle) = new AcDbCircle(pCenter, vec, radius);
 
 	AcDbObjectId circleId;
-	circleId = CModifyEnt::PostToModelSpace(&hCircle);
+	circleId = CModifyEnt::PostToModelSpace(hCircle);
 
 	return circleId;
 }

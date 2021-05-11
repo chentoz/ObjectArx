@@ -7,9 +7,17 @@
 #include "Calculation.h"
 #include "Entities.h"
 
+void change_color(void)
+{
+	AcGePoint3d pStart(0, 0, 0);
+	AcGePoint3d pEnd(100, 100, 0);
+	AcDbObjectId lineId;
+	lineId = CCreateEnt::CreateLine(pStart, pEnd);
+	CModifyEnt::ChangeColor(lineId, 1);
+}
+
 void add_block(void)
 {
-	//Hi();
 	H(AcDbBlockTable, pBlkTbl);
 	acdbHostApplicationServices()->workingDatabase()->getBlockTable(pBlkTbl, AcDb::kForWrite);
 
@@ -40,6 +48,187 @@ void add_block(void)
 	pBlkTblRcd->appendAcDbEntity(entId, pLine1);
 	pBlkTblRcd->appendAcDbEntity(entId, pLine2);
 	pBlkTblRcd->appendAcDbEntity(entId, pCircle);
+}
+
+void add_block_DianRong(void)
+{
+	H(AcDbBlockTable, pBlkTbl);
+	acdbHostApplicationServices()->workingDatabase()->getBlockTable(pBlkTbl, AcDb::kForWrite);
+
+	H(AcDbBlockTableRecord, pBlkTblRcd) = new AcDbBlockTableRecord();
+
+	ACHAR blkName[40];
+
+	if (acedGetString(Adesk::kFalse, L"\n输入图块的名称：", blkName) != RTNORM)
+	{
+		return;
+	}
+	pBlkTblRcd->setName(blkName);
+	AcDbObjectId blkDefId;
+	pBlkTbl->add(blkDefId, pBlkTblRcd);
+
+	AcDbObjectId entId;
+
+	{
+		AcGePoint3d p1(5, 15, 0);
+		AcGePoint3d p2(5, 10, 0);
+		H(AcDbLine, pLine) = new AcDbLine(p1, p2);
+		pBlkTblRcd->appendAcDbEntity(entId, pLine);
+	}
+
+	{
+		AcGePoint3d p1(0, 10, 0);
+		AcGePoint3d p2(10, 10, 0);
+		H(AcDbLine, pLine) = new AcDbLine(p1, p2);
+		pBlkTblRcd->appendAcDbEntity(entId, pLine);
+	}
+
+	{
+		AcGePoint3d p1(5, -15, 0);
+		AcGePoint3d p2(5, -10, 0);
+		H(AcDbLine, pLine) = new AcDbLine(p1, p2);
+		pBlkTblRcd->appendAcDbEntity(entId, pLine);
+	}
+
+	{
+		AcGePoint3d p1(0, -10, 0);
+		AcGePoint3d p2(10, -10, 0);
+		H(AcDbLine, pLine) = new AcDbLine(p1, p2);
+		pBlkTblRcd->appendAcDbEntity(entId, pLine);
+	}
+}
+
+void add_block_GeliKaiGuan(void)
+{
+	H(AcDbBlockTable, pBlkTbl);
+	acdbHostApplicationServices()->workingDatabase()->getBlockTable(pBlkTbl, AcDb::kForWrite);
+
+	H(AcDbBlockTableRecord, pBlkTblRcd) = new AcDbBlockTableRecord();
+
+	ACHAR blkName[40];
+
+	if (acedGetString(Adesk::kFalse, L"\n输入图块的名称：", blkName) != RTNORM)
+	{
+		return;
+	}
+	pBlkTblRcd->setName(blkName);
+	AcDbObjectId blkDefId;
+	pBlkTbl->add(blkDefId, pBlkTblRcd);
+
+	AcDbObjectId entId;
+
+	{
+		AcGePoint3d p1(5, 15, 0);
+		AcGePoint3d p2(5, 10, 0);
+		H(AcDbLine, pLine) = new AcDbLine(p1, p2);
+		pBlkTblRcd->appendAcDbEntity(entId, pLine);
+	}
+
+	// 斜面
+	{
+		AcGePoint3d p1(5, 10, 0);
+		AcGePoint3d p2(0, -10, 0);
+		H(AcDbLine, pLine) = new AcDbLine(p1, p2);
+		pBlkTblRcd->appendAcDbEntity(entId, pLine);
+	}
+
+	{
+		AcGePoint3d p1(5, -15, 0);
+		AcGePoint3d p2(5, -10, 0);
+		H(AcDbLine, pLine) = new AcDbLine(p1, p2);
+		pBlkTblRcd->appendAcDbEntity(entId, pLine);
+	}
+
+	{
+		AcGePoint3d p1(3, -10, 0);
+		AcGePoint3d p2(7, -10, 0);
+		H(AcDbLine, pLine) = new AcDbLine(p1, p2);
+		pBlkTblRcd->appendAcDbEntity(entId, pLine);
+	}
+}
+
+void add_block_JieDiFuHao(void)
+{
+	H(AcDbBlockTable, pBlkTbl);
+	acdbHostApplicationServices()->workingDatabase()->getBlockTable(pBlkTbl, AcDb::kForWrite);
+
+	H(AcDbBlockTableRecord, pBlkTblRcd) = new AcDbBlockTableRecord();
+
+	ACHAR blkName[40];
+
+	if (acedGetString(Adesk::kFalse, L"\n输入图块的名称：", blkName) != RTNORM)
+	{
+		return;
+	}
+	pBlkTblRcd->setName(blkName);
+	AcDbObjectId blkDefId;
+	pBlkTbl->add(blkDefId, pBlkTblRcd);
+
+	AcDbObjectId entId;
+
+	{
+		AcGePoint3d p1(5, 15, 0);
+		AcGePoint3d p2(5, 5, 0);
+		H(AcDbLine, pLine) = new AcDbLine(p1, p2);
+		pBlkTblRcd->appendAcDbEntity(entId, pLine);
+	}
+
+	{
+		AcGePoint3d p1(0, 5, 0);
+		AcGePoint3d p2(10, 5, 0);
+		H(AcDbLine, pLine) = new AcDbLine(p1, p2);
+		pBlkTblRcd->appendAcDbEntity(entId, pLine);
+	}
+
+	{
+		AcGePoint3d p1(2, -5, 0);
+		AcGePoint3d p2(8, -5, 0);
+		H(AcDbLine, pLine) = new AcDbLine(p1, p2);
+		pBlkTblRcd->appendAcDbEntity(entId, pLine);
+	}
+
+	{
+		AcGePoint3d p1(4, -10, 0);
+		AcGePoint3d p2(6, -10, 0);
+		H(AcDbLine, pLine) = new AcDbLine(p1, p2);
+		pBlkTblRcd->appendAcDbEntity(entId, pLine);
+	}
+}
+
+#define ADD_2D_LINE(x_s, y_s, x_e, y_e) \
+{\
+	AcGePoint3d p1(x_s, y_s, 0);\
+	AcGePoint3d p2(x_e, y_e, 0);  \
+	H(AcDbLine, pLine) = new AcDbLine(p1, p2);\
+	pBlkTblRcd->appendAcDbEntity(entId, pLine);\
+}\
+
+void add_block_JieDiKaiGuan(void)
+{
+	H(AcDbBlockTable, pBlkTbl);
+	acdbHostApplicationServices()->workingDatabase()->getBlockTable(pBlkTbl, AcDb::kForWrite);
+
+	H(AcDbBlockTableRecord, pBlkTblRcd) = new AcDbBlockTableRecord();
+
+	ACHAR blkName[40];
+
+	if (acedGetString(Adesk::kFalse, L"\n输入图块的名称：", blkName) != RTNORM)
+	{
+		return;
+	}
+	pBlkTblRcd->setName(blkName);
+	AcDbObjectId blkDefId;
+	pBlkTbl->add(blkDefId, pBlkTblRcd);
+
+	AcDbObjectId entId;
+
+	ADD_2D_LINE(4, 15, 6, 15);
+	ADD_2D_LINE(3, 13, 7, 13);
+	ADD_2D_LINE(2, 11, 8, 11);
+	ADD_2D_LINE(5, 11, 5, 5);
+	ADD_2D_LINE(5, 5, 8, -5);
+	ADD_2D_LINE(4, -7, 6, -7);
+	ADD_2D_LINE(5, -7, 5, -15);
 }
 
 void add_block_ref(void)
@@ -85,8 +274,8 @@ void add_block_with_properties(void)
 	ACHAR blkName[40];
 	if (acedGetString(Adesk::kFalse, L"\n输入图块的名称: ", blkName) != RTNORM)
 	{
-		Hi();
 		pBlkTblRcd.Delete();
+		return;
 	}
 	pBlkTblRcd->setName(blkName);
 
@@ -195,11 +384,7 @@ ADD_CMD("HelloWorld", []()->void
 
 ADD_CMD("ChangeColor", []()->void
 {
-	AcGePoint3d pStart(0, 0, 0);
-	AcGePoint3d pEnd(100, 100, 0);
-	AcDbObjectId lineId;
-	lineId = CCreateEnt::CreateLine(pStart, pEnd);
-	CModifyEnt::ChangeColor(lineId, 1);
+	change_color();
 })
 
 ADD_CMD("AddLine", []()->void
@@ -357,7 +542,11 @@ ADD_CMD("AddText", []()->void {
 })
 
 ADD_CMD("AddBlock", []()->void {
-	add_block();
+	//add_block();
+	add_block_DianRong();
+	add_block_GeliKaiGuan();
+	add_block_JieDiFuHao();
+	add_block_JieDiKaiGuan();
 })
 
 ADD_CMD("InsertBlock", []()->void {
