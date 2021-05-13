@@ -17,4 +17,8 @@
 
 #include <rxdlinkr.h>
 
+#include <acdocman.h>
+
+
+
 #endif //PCH_H

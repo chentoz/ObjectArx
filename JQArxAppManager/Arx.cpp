@@ -9,10 +9,8 @@
 void InitApp()
 {
 	acedRegCmds->addCommand(L"JQArxAppManager", L"JQU", L"JQU", ACRX_CMD_MODAL, []()->void {
-		//acrxDynamicLinker->unloadApp(LR"(D:\C\Desktop\Arx\x64\Release\HelloARX.arx)", true);
-		acrxDynamicLinker->unloadApp(LR"(D:\C\Desktop\Arx\x64\Dev\HelloARX.arx)", true);
-		//acrxDynamicLinker->unloadModule(LR"(D:\C\Desktop\Arx\x64\Release\HelloARX.arx)", true);
-		acrxDynamicLinker->unloadModule(LR"(D:\C\Desktop\Arx\x64\Dev\HelloARX.arx)", true);
+		//acrxDynamicLinker->unloadApp(L"HelloARX.arx", true);
+		acrxDynamicLinker->unloadModule(L"HelloARX.arx", true);
 	});
 
 	acedRegCmds->addCommand(L"JQArxAppManager", L"JQH", L"JQH", ACRX_CMD_MODAL, []()->void {
@@ -20,10 +18,14 @@ void InitApp()
 	});
 
 	acedRegCmds->addCommand(L"JQArxAppManager", L"JQL", L"JQL", ACRX_CMD_MODAL, []()->void {
-		//acrxDynamicLinker->loadApp(LR"(D:\C\Desktop\Arx\x64\Release\HelloARX.arx)", AcadApp::kOnLoadRequest, true, true);
-		acrxDynamicLinker->loadApp(LR"(D:\C\Desktop\Arx\x64\Dev\HelloARX.arx)", AcadApp::kOnLoadRequest, true, true);
-		//acrxDynamicLinker->loadModule(LR"(D:\C\Desktop\Arx\x64\Release\HelloARX.arx)", AcadApp::kOnLoadRequest, true);
-		acrxDynamicLinker->loadModule(LR"(D:\C\Desktop\Arx\x64\Dev\HelloARX.arx)", AcadApp::kOnLoadRequest, true);
+		//acrxDynamicLinker->loadApp(L"HelloARX.arx", AcadApp::kOnLoadRequest, true, true);
+		acrxDynamicLinker->loadModule(L"HelloARX.arx", true, true);
+	});
+
+	acedRegCmds->addCommand(L"JQArxAppManager", L"bb", L"bb", ACRX_CMD_MODAL, []()->void {
+		//AcApDocManager::sendStringToExecute(AcApDocManager::activateDocument(), )
+		//acrxDynamicLinker->unloadApp(L"JQArxAppManager", true);
+		//acrxDynamicLinker->unloadModule(L"JQArxAppManager.arx", true);
 	});
 }
 

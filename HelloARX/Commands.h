@@ -30,19 +30,27 @@ void add_block(void)
 		return;
 	}
 	pBlkTblRcd->setName(blkName);
+
+	AcCmColor colors;
+
 	AcDbObjectId blkDefId;
 	pBlkTbl->add(blkDefId, pBlkTblRcd);
+
+	auto es = colors.setColorMethod(AcCmEntityColor::kByBlock); // 块内跟随块（参照）
 
 	AcGePoint3d pStart(-10, 0, 0);
 	AcGePoint3d pEnd(10, 0, 0);
 	H(AcDbLine, pLine1) = new AcDbLine(pStart, pEnd);
+	pLine1->setColor(colors);
 
 	pStart.set(0, -10, 0);
 	pEnd.set(0, 10, 0);
 	H(AcDbLine, pLine2) = new AcDbLine(pStart, pEnd);
+	pLine2->setColor(colors);
 
 	AcGeVector3d vecNormal(0, 0, 1);
 	H(AcDbCircle, pCircle) = new AcDbCircle(AcGePoint3d::kOrigin, vecNormal, 6);
+	pCircle->setColor(colors);
 
 	AcDbObjectId entId;
 	pBlkTblRcd->appendAcDbEntity(entId, pLine1);
@@ -165,7 +173,6 @@ void add_block_JieDiFuHao(void)
 	pBlkTbl->add(blkDefId, pBlkTblRcd);
 
 	AcDbObjectId entId;
-
 	{
 		AcGePoint3d p1(5, 15, 0);
 		AcGePoint3d p2(5, 5, 0);
@@ -259,7 +266,15 @@ void add_block_ref(void)
 
 	AcDbObjectId blkDefId;
 	pBlkTbl->getAt(strBlkDef.c_str(), blkDefId);
+
 	H(AcDbBlockReference, pBlkRef) = new AcDbBlockReference(pInsert, blkDefId);
+
+	AcCmColor colors; //设置块的颜色
+	colors.setColorMethod(AcCmEntityColor::kByColor); //指定颜色
+	//colors.setColorMethod(AcCmEntityColor::kByLayer); //指定颜色
+	colors.setColorIndex(4); //设置块引用的颜色
+
+	pBlkRef->setColor(colors);
 
 	AcDbObjectId entId;
 	pBlkTblRcd->appendAcDbEntity(entId, pBlkRef);
@@ -377,7 +392,7 @@ void insert_block_with_properties(void)
 
 BEGIN_DECLARE_CMDS
 
-ADD_CMD("HelloWorld", []()->void
+ADD_CMD("Hi", []()->void
 {
 	acutPrintf(L"\nHello World!");
 })
@@ -542,11 +557,11 @@ ADD_CMD("AddText", []()->void {
 })
 
 ADD_CMD("AddBlock", []()->void {
-	//add_block();
-	add_block_DianRong();
-	add_block_GeliKaiGuan();
-	add_block_JieDiFuHao();
-	add_block_JieDiKaiGuan();
+	add_block();
+	//add_block_DianRong();
+	//add_block_GeliKaiGuan();
+	//add_block_JieDiFuHao();
+	//add_block_JieDiKaiGuan();
 })
 
 ADD_CMD("InsertBlock", []()->void {
