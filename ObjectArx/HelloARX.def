@@ -1,0 +1,5 @@
+LIBRARY HelloARX.arx
+ 																		  
+EXPORTS
+acrxEntryPoint PRIVATE
+acrxGetApiVersion PRIVATE
